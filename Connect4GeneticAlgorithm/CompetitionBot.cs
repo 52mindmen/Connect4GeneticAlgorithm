@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 class CompetitionBot : Opponent
 {
-    static readonly List<List<List<ulong>>> winCheckBoard = ConnectFour.precomputeWinChecks();
+    static readonly List<List<List<ulong>>> winCheckBoard = ConnectFour.PrecomputeWinChecks();
 
-    bool winCheck(ulong pieces, int col, int row)
+    static bool WinCheck(ulong pieces, int col, int row)
     {
         bool value = winCheckBoard[row][col].Any(board => (board & pieces) == board);
         return value;
     }
-    int _bestMove(List<int> heights, bool myTurn, ulong myPieces, ulong enemyPieces, int move, int depth)
+    int BestMove(List<int> heights, bool myTurn, ulong myPieces, ulong enemyPieces, int move, int depth)
     {
         if (depth == 0)
             return 0;
@@ -22,7 +22,7 @@ class CompetitionBot : Opponent
         if (myTurn)
         {
             myPieces += ((ulong)1) << ((heights[move]-1) * 7 + 6 - move);
-            if (winCheck(myPieces, move, heights[move] - 1))
+            if (WinCheck(myPieces, move, heights[move] - 1))
             {
                 return -1 * depth;
             }
@@ -30,7 +30,7 @@ class CompetitionBot : Opponent
         else
         {
             enemyPieces += ((ulong)1) << ((heights[move]-1) * 7 + 6 - move);
-            if (winCheck(enemyPieces, move, heights[move] - 1))
+            if (WinCheck(enemyPieces, move, heights[move] - 1))
             {
                 return -1 * depth;
             }
@@ -41,7 +41,7 @@ class CompetitionBot : Opponent
         {
             if (heights[i] + 1 > 6)
                 continue;
-            int value = _bestMove(new List<int>(heights), !myTurn, myPieces, enemyPieces, i, depth - 1);
+            int value = BestMove(new List<int>(heights), !myTurn, myPieces, enemyPieces, i, depth - 1);
             value = -1 * value;
             if (value > bestValue)
                 bestValue = value;
@@ -49,7 +49,7 @@ class CompetitionBot : Opponent
         return bestValue;
     }
 
-    public int bestMove(List<int> heights, bool myTurn, ulong myPieces, ulong enemyPieces)
+    public int BestMove(List<int> heights, bool myTurn, ulong myPieces, ulong enemyPieces)
     {
         List<int> bestMoves = new List<int>();
         int max = int.MinValue;
@@ -59,7 +59,7 @@ class CompetitionBot : Opponent
         {
             if (heights[i] + 1 > 6)
                 continue;
-            int value = -1 * _bestMove(new List<int>(heights), myTurn, myPieces, enemyPieces, i, depth);
+            int value = -1 * BestMove(new List<int>(heights), myTurn, myPieces, enemyPieces, i, depth);
 
             if (value > max)
             {
@@ -87,14 +87,14 @@ class CompetitionBot : Opponent
         ulong enemyPieces;
         if (player == 1)
         {
-            myPieces = game.p1board;
-            enemyPieces = game.p2board;
+            myPieces = game.P1Board;
+            enemyPieces = game.P2Board;
         }
         else
         {
-            myPieces = game.p2board;
-            enemyPieces = game.p1board;
+            myPieces = game.P2Board;
+            enemyPieces = game.P1Board;
         }
-        return bestMove(game.heights, game.currentPlayer == player, myPieces, enemyPieces);
+        return BestMove(game.Heights, game.CurrentPlayer == player, myPieces, enemyPieces);
     }
 }

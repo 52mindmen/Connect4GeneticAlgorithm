@@ -76,8 +76,8 @@ class NeuralNetwork : Opponent
         double[] board = new double[42];
         for (int i = 0; i < 42; i++)
         {
-            board[i] = game.board[i] * player;
+            board[i] = game.Board[i] * player;
         }
-        return this.Classify(board, game.availableMoves);
+        return this.Classify(board, game.AvailableMoves);
     }
 }

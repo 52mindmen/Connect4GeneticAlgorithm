@@ -6,65 +6,65 @@ using System.Threading.Tasks;
 
 class ConnectFour
 {
-    public static readonly List<List<List<ulong>>> winCheckBoard = precomputeWinChecks();
+    public static readonly List<List<List<ulong>>> winCheckBoard = PrecomputeWinChecks();
 
-    public double[] board;
-    public List<int> availableMoves;
-    public List<int> playedMoves;
-    public List<int> heights;
-    public int currentPlayer { get; private set; }
-    public ulong p1board { get; private set; }
-    public ulong p2board { get; private set; }
+    public double[] Board { get; private set; }
+    public List<int> AvailableMoves { get; private set; }
+    public List<int> PlayedMoves { get; private set; }
+    public List<int> Heights { get; private set; }
+    public int CurrentPlayer { get; private set; }
+    public ulong P1Board { get; private set; }
+    public ulong P2Board { get; private set; }
 
     public ConnectFour() 
     {
-        board = new double[42];
-        availableMoves = new List<int> { 0, 1, 2, 3, 4, 5, 6 };
-        playedMoves = new List<int>();
-        heights = new List<int> { 0, 0, 0, 0, 0, 0, 0 };
-        currentPlayer = 1;
-        p1board = 0;
-        p2board = 0;
+        Board = new double[42];
+        AvailableMoves = new List<int> { 0, 1, 2, 3, 4, 5, 6 };
+        PlayedMoves = new List<int>();
+        Heights = new List<int> { 0, 0, 0, 0, 0, 0, 0 };
+        CurrentPlayer = 1;
+        P1Board = 0;
+        P2Board = 0;
     }
     public bool MakeMove(int position)
     {
-        if (!availableMoves.Contains(position))
+        if (!AvailableMoves.Contains(position))
         {
             return false;
         }
-        playedMoves.Add(position);
-        board[heights[position] * 7 + position] = currentPlayer;
-        heights[position]++;
-        if (heights[position] > 5)
+        PlayedMoves.Add(position);
+        Board[Heights[position] * 7 + position] = CurrentPlayer;
+        Heights[position]++;
+        if (Heights[position] > 5)
         {
-            availableMoves.Remove(position);
+            AvailableMoves.Remove(position);
         }
-        if (currentPlayer == 1)
+        if (CurrentPlayer == 1)
         {
-            p1board += ((ulong) 1) << ((heights[position] - 1) * 7 + 6 - position);
+            P1Board += ((ulong) 1) << ((Heights[position] - 1) * 7 + 6 - position);
         }
         else
         {
-            p2board += ((ulong) 1) << ((heights[position] - 1) * 7 + 6 - position);
+            P2Board += ((ulong) 1) << ((Heights[position] - 1) * 7 + 6 - position);
         }
-        currentPlayer = currentPlayer == 1 ? -1 : 1;
+        CurrentPlayer = CurrentPlayer == 1 ? -1 : 1;
         return true;
     }
 
     public Status CheckWin(int position, int playerToCheck)
     {
         if (playerToCheck == 1 &&
-            winCheckBoard[heights[position]-1][position].Any(winCondition => (p1board & winCondition) == winCondition))
+            winCheckBoard[Heights[position]-1][position].Any(winCondition => (P1Board & winCondition) == winCondition))
         {
             return Status.P1Win;
         }
         if (playerToCheck == -1 &&
-            winCheckBoard[heights[position]-1][position].Any(winCondition => (p2board & winCondition) == winCondition))
+            winCheckBoard[Heights[position]-1][position].Any(winCondition => (P2Board & winCondition) == winCondition))
         {
             return Status.P2Win;
         }
 
-        if (playedMoves.Count < 42)
+        if (PlayedMoves.Count < 42)
         {
             return Status.Ongoing;
         }
@@ -73,7 +73,7 @@ class ConnectFour
         return Status.Draw;
     }
 
-    static public List<List<List<ulong>>> precomputeWinChecks()
+    static public List<List<List<ulong>>> PrecomputeWinChecks()
     {
         {
             List<List<List<ulong>>> board = new(6);

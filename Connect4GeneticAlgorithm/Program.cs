@@ -16,7 +16,7 @@ class Program
     const double mutationChance = 0.001;
 
     static List<NeuralNetwork>[] population = new List<NeuralNetwork>[populationGroups];
-    async static Task Main(string[] args)
+    static void Main(string[] args)
     {
         for (int i = 0; i < populationGroups; i++)
         {
@@ -125,9 +125,7 @@ class Program
             for (int j = (numbers.Count - 1); j > 0; j--)
             {
                 int k = ThreadSafeRandom.Next(j);
-                int temp = numbers[j];
-                numbers[j] = numbers[k];
-                numbers[k] = temp;
+                (numbers[k], numbers[j]) = (numbers[j], numbers[k]);
             }
             Parallel.For(0, populationGroups, j => swappedPopulation[j].Add(populationToSwap[numbers[j]][i]));
         }
@@ -236,9 +234,9 @@ class Program
         int move = playerOne.GetMove(game, 1);
         game.MakeMove(move);
         Status result;
-        while ((result = game.CheckWin(move, game.currentPlayer == 1 ? -1 : 1)) == Status.Ongoing)
+        while ((result = game.CheckWin(move, game.CurrentPlayer == 1 ? -1 : 1)) == Status.Ongoing)
         {
-            if (game.currentPlayer == 1)
+            if (game.CurrentPlayer == 1)
             {
                 move = playerOne.GetMove(game, 1);
                 game.MakeMove(move);
@@ -258,6 +256,7 @@ class Program
                 return -1;
             case Status.Draw:
                 return 0;
+            case Status.Ongoing:
             default:
                 throw new NotImplementedException();
         }
@@ -265,8 +264,8 @@ class Program
 
     static void DisplayBothBoards(ConnectFour game)
     {
-        string p1BoardString = Convert.ToString((long)game.p1board, 2).PadLeft(64, '0');
-        string p2BoardString = Convert.ToString((long)game.p2board, 2).PadLeft(64, '0');
+        string p1BoardString = Convert.ToString((long)game.P1Board, 2).PadLeft(64, '0');
+        string p2BoardString = Convert.ToString((long)game.P2Board, 2).PadLeft(64, '0');
 
         p1BoardString = p1BoardString.Substring(22, 42);
         p2BoardString = p2BoardString.Substring(22, 42);
