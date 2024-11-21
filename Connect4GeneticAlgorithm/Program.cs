@@ -1,22 +1,23 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
-class Program
+static class Program
 {
     const int startingPopulation = 1024;
     const int populationGroups = 4;
-    const int controlSize = 64;
     static readonly int[] layerSizes = { 42, 128, 64, 32, 16, 7 };
     const double mutationChance = 0.001;
 
     static List<NeuralNetwork>[] population = new List<NeuralNetwork>[populationGroups];
-    static void Main(string[] args)
+    static void Main()
     {
         for (int i = 0; i < populationGroups; i++)
         {
@@ -26,10 +27,7 @@ class Program
                 population[i].Add(new NeuralNetwork(layerSizes));
             }
         }
-/*        Debug.Assert(FindMedian(new int[] { 0, 1, 2, 3, 4, 5 }) == 3);
-        Debug.Assert(FindMedian(new int[] { 1, 2, 3, 4, 5 }) == 3);
-        Debug.Assert(FindMedian(new int[] { 5, 2, 1, 0, 4, 3 }) == 3);
-        Debug.Assert(FindMedian(new int[] { 3, 2, 1, 5, 4 }) == 3);*/
+
         CompetitionBot competitionBot = new CompetitionBot();
 
         int gamesWon, gamesLost, ties, total;
@@ -71,35 +69,34 @@ class Program
             maxTies = Math.Max(maxTies, ties);
 
             Console.WriteLine("Versus Competitive Bot");
-            Console.WriteLine($"Current / Max Games  Won: {gamesWon} ({((gamesWon - lastGamesWon) < 0 ? "-" : "+")}{Math.Abs(gamesWon - lastGamesWon)}) / {maxGamesWon}");
-            Console.WriteLine($"Current / Min Games Lost: {gamesLost} ({((gamesLost - lastGamesLost) < 0 ? "-" : "+")}{Math.Abs(gamesLost - lastGamesLost)}) / {minGamesLost}");
-            Console.WriteLine($"Current / Max Games Tied: {ties} ({((ties - lastTies) < 0 ? "-" : "+")}{Math.Abs(ties - lastTies)}) / {maxTies}");
+            Console.WriteLine($"Current / Max Games  Won: {gamesWon} ({(gamesWon < lastGamesWon ? "-" : "+")}{Math.Abs(gamesWon - lastGamesWon)}) / {maxGamesWon}");
+            Console.WriteLine($"Current / Min Games Lost: {gamesLost} ({(gamesLost < lastGamesLost ? "-" : "+")}{Math.Abs(gamesLost - lastGamesLost)}) / {minGamesLost}");
+            Console.WriteLine($"Current / Max Games Tied: {ties} ({(ties < lastTies ? "-" : "+")}{Math.Abs(ties - lastTies)}) / {maxTies}");
             Console.WriteLine();
 
             Console.WriteLine($"Iteration {iteration++}");
-            for (int i = 0; i < populationGroups; i++)
+            DateTime start = DateTime.Now;
+            using (var progress = new ProgressBar())
             {
-                Console.WriteLine($"Group {i}");
-                List<NeuralNetwork> populationGroup = population[i];
-                DateTime start = DateTime.Now;
-
-                using (var progress = new ProgressBar())
+                for (int i = 0; i < populationGroups; i++)
                 {
+                    List<NeuralNetwork> populationGroup = population[i];
+
+
                     for (int j = 0; j < 100; j++)
                     {
-                        progress.Report((double)j / 100);
-                        List<NeuralNetwork> neuralNetworks = Sort(populationGroup);
-                        populationGroup = neuralNetworks;
-                        population[i] = Breed(populationGroup);
-                        //List<NeuralNetwork> neuralNetworks = NewSortAndBreed(populationGroup);
-                        //populationGroup = neuralNetworks;
-                        //population[i] = populationGroup;
+                        progress.Report((double)(j + (i * 100)) / (populationGroups * 100));
+
+                        List<NeuralNetwork> sortedNeuralNetworks;
+                        sortedNeuralNetworks = Sort(populationGroup);
+                        List<NeuralNetwork> bredNeuralNetworks;
+                        bredNeuralNetworks = Breed(sortedNeuralNetworks);
+                        population[i] = bredNeuralNetworks;
                     }
                 }
-
-                DateTime end = DateTime.Now;
-                Console.WriteLine($"Time Elapsed: {end - start}");
             }
+            DateTime end = DateTime.Now;
+            Console.WriteLine($"Time Elapsed: {end - start}");
             List<NeuralNetwork>[] swappedPopulation = SwapPopulation(population);
             population = swappedPopulation;
 
@@ -127,7 +124,9 @@ class Program
                 int k = ThreadSafeRandom.Next(j);
                 (numbers[k], numbers[j]) = (numbers[j], numbers[k]);
             }
-            Parallel.For(0, populationGroups, j => swappedPopulation[j].Add(populationToSwap[numbers[j]][i]));
+            Parallel.For(0, populationGroups, j => {
+                swappedPopulation[j].Add(populationToSwap[numbers[j]][i]);
+            });
         }
 
         List<NeuralNetwork>[] result = new List<NeuralNetwork>[populationGroups];
@@ -157,7 +156,7 @@ class Program
         {
             int r1 = ThreadSafeRandom.Next(halfPopulation);
             int r2 = ThreadSafeRandom.Next(halfPopulation);
-            
+
             if (r1 == r2)
             {
                 children.Add(population[r1]);
@@ -291,7 +290,7 @@ class Program
     {
         int[] wins = new int[input.Count];
 
-        const int iterations = 8;
+        const int iterations = 4;
 
         Parallel.For(0, input.Count, i =>
         {
